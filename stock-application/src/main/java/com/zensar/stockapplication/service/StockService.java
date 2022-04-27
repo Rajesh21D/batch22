@@ -3,17 +3,19 @@ package com.zensar.stockapplication.service;
 import java.util.List;
 
 import com.zensar.stockapplication.entity.Stock;
+import com.zensar.stockapplication.entity.StockRequest;
+import com.zensar.stockapplication.entity.StockResponse;
 
 public interface StockService {
-List<Stock> getAllStock();
+List<StockResponse> getAllStock(int pageNumber,int pageSize);
 	
-	Stock getStock(long id);
+	StockResponse getStock(long id);
 	
-	Stock createStock( Stock stock,String token);
+	StockResponse createStock( StockRequest stock,String token);
 	
 	String deleteStock( long stockId);
 	
-	Stock updateStock( int stockId, Stock stock);
+	StockResponse updateStock( int stockId, StockRequest stock);
 	
 	String deleteAllStocks();
 	

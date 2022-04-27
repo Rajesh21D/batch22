@@ -1,2 +1,27 @@
 server:
  port: 9090
+ 
+ 
+ 
+spring:
+    mvc:
+      pathmatch:
+            matching-strategy: ant_path_matcher
+    
+       
+       
+    datasource:
+      url: jdbc:mysql://localhost:3306/stockApp
+      username: root
+      password: root 
+    jpa:
+      properties:
+        hibernate:
+             format_sql: true
+      hibernate:
+         ddl-auto: update 
+      show-sql: true     
+        
+            
+          
+        

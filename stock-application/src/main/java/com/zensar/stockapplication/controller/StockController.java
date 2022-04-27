@@ -21,17 +21,28 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.zensar.stockapplication.entity.Stock;
+import com.zensar.stockapplication.entity.StockRequest;
+import com.zensar.stockapplication.entity.StockResponse;
 import com.zensar.stockapplication.service.StockService;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import springfox.documentation.annotations.ApiIgnore;
 
 @RestController
 //@Controller
 //@CrossOrigin("http://localhost:4200")
 //@RequestMapping("/stocks")
-@RequestMapping(value="/stocks",produces= {MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE}, consumes= { MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE})
+@RequestMapping(value="/stocks")
+//@RequestMapping(produces= {MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE}, consumes= { MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE})
+//@Api(value= "This is stock controller")
 public class StockController {
 	
 	@Autowired
@@ -51,11 +62,14 @@ public class StockController {
 		System.out.println("I am inside test method");
 	} */
 	
-	@GetMapping()
+	@GetMapping(produces= {MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE})
 	//@ResponseBody
 	//@RequestMapping(method=RequestMethod.GET)
-	public List<Stock> getAllStocks() {
-           return stockService.getAllStock();
+	@ApiOperation(value= "Getting All Stock Info")
+	//@ApiIgnore
+	public List<StockResponse> getAllStocks(@RequestParam(value="pageNumber", defaultValue="0", required=false) int pageNumber,@RequestParam(value="pageSize", defaultValue="5", required=false) int pageSize) {
+		System.out.println(pageSize);
+           return stockService.getAllStock( pageNumber,pageSize);
 }
 	
 /*	@GetMapping("/{stockId}")
@@ -70,9 +84,11 @@ public class StockController {
 		return null;
 	} */
 	
-	@GetMapping("/{stockId}")
+	@GetMapping(value="/{stockId}",produces= {MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE})
 	//@RequestMapping(value="/{stockId}",method=RequestMethod.GET,produces= {MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE}, consumes= { MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE})
-	public Stock getStock(@PathVariable("stockId") long id) {
+	@ApiOperation("Getting stock based on stock id")
+	@ApiResponse( message = "Got the stock of given stock id",code = 200)
+	public StockResponse getStock(@ApiParam("stock id has to be greater than 1") @PathVariable("stockId") long id) {
 		
 	return stockService.getStock(id);
 	} 
@@ -88,27 +104,27 @@ public class StockController {
 		return null;
 	} */
 	
-	@PostMapping()
+	@PostMapping(produces= {MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE}, consumes= { MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE})
 	//@RequestMapping(method=RequestMethod.POST)
-	public ResponseEntity<Stock> createStock(@RequestBody Stock stock, @RequestHeader("auth-token")String token) {
-		Stock createStock =stockService.createStock(stock, token);
+	public ResponseEntity<StockResponse> createStock(@RequestBody StockRequest stock, @RequestHeader("auth-token")String token) {
+		StockResponse createStock =stockService.createStock(stock, token);
 		
-		return new  ResponseEntity<Stock>(createStock,HttpStatus.CREATED);
+		return new  ResponseEntity<StockResponse>(createStock,HttpStatus.CREATED);
 	}
 	
-	@DeleteMapping("/{stockId}")
+	@DeleteMapping(value="/{stockId}",produces= {MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE}, consumes= { MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE})
 	//@RequestMapping(value="/stocks",method=RequestMethod.DELETE)
 	public String deleteStock(@PathVariable("stockId") long stockId) {
 		return stockService.deleteStock(stockId);
 	}
 	
-	@PutMapping("/{stockId}")
+	@PutMapping(value="/{stockId}",produces= {MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE}, consumes= { MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE})
 //	@RequestMapping(value="/stocks/{stockId}",method=RequestMethod.GET)
-	public Stock updateStock(@PathVariable int stockId,@RequestBody Stock stock) {
+	public StockResponse updateStock(@PathVariable int stockId,@RequestBody StockRequest stock) {
 		return stockService.updateStock(stockId, stock);
 	} 
 	
-	@DeleteMapping
+	@DeleteMapping(produces= {MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE})
 	public ResponseEntity<String> deleteAllStocks(){
 	String returnResult=stockService.deleteAllStocks();
 

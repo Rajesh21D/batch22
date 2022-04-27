@@ -15,14 +15,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @ApiModel("This is the stock model")
-@Entity
-public class Stock {
 
-	@ApiModelProperty("StockId of integer type")
-	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+public class StockRequest {
+	
 	private long stockId;
 	private String name;
 	private String marketName;
-	private double price;	
+	private double price;
 }
