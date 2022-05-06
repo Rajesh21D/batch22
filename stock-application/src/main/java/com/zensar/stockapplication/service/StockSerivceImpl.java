@@ -4,74 +4,99 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import com.zensar.stockapplication.dto.StockDto;
 import com.zensar.stockapplication.entity.Stock;
-import com.zensar.stockapplication.entity.StockRequest;
-import com.zensar.stockapplication.entity.StockResponse;
+import com.zensar.stockapplication.exceptions.InvalidStockIdException;
 import com.zensar.stockapplication.repository.StockRepository;
 @Service
 public class StockSerivceImpl implements StockService {
 	
 	@Autowired
 	private StockRepository stockRepository;
-	
-
+//	@Autowired
+	//private ModelMapper modelMapper= new ModelMapper();
+    
+	@Autowired
+	private ModelMapper modelMapper;
 	@Override
-	public List<StockResponse> getAllStock(int pageNumber,int pageSize) {
+	public List<StockDto> getAllStock(int pageNumber,int pageSize) {
 		
 	Page<Stock> pageStocks= stockRepository.findAll(PageRequest.of(pageNumber, pageSize,Sort.by("marketName").descending()));	
 		List<Stock> content = pageStocks.getContent();
-		List<StockResponse> stockResponses=new ArrayList<>();
+		List<StockDto> stockResponses=new ArrayList<>();
 		for(Stock stock : content) {
-			StockResponse mapToResponse = mapToResponse(stock);
+			StockDto mapToResponse = modelMapper.map(stock,StockDto.class);
 			stockResponses.add(mapToResponse);
 		}
 		
 		return stockResponses;
 	}
-
-	@Override
-	public StockResponse getStock(long id) {
+  
+	public List<StockDto> getStockByItsName(String stockName) {
+	List<Stock> findStockByName= stockRepository.findStockByItsName(stockName);
+	
+	List<StockDto> stocks=new ArrayList<StockDto>();
+	
+	for(Stock st:findStockByName) {
+		stocks.add(modelMapper.map(st, StockDto.class));
+	}
+	
+	return stocks;
+	}
+	public List<StockDto> getStockByItsNameAndPrice(String stockName, double price) {
+		List<Stock> findStockByNameAndPrice= stockRepository.findStockByItsNameAndPrice(stockName,price);
 		
-		Stock stock= stockRepository.findById(id).get();
-		StockResponse stockResponse=new StockResponse();
+		List<StockDto> stocks=new ArrayList<StockDto>();
+		
+		for(Stock st:findStockByNameAndPrice) {
+			stocks.add(modelMapper.map(st, StockDto.class));
+		}
+		
+		return stocks;
+		}
+	
+	@Override
+	public StockDto getStock(long id) throws InvalidStockIdException {
+		
+	Optional<Stock> optionalStock=	stockRepository.findById(id);
+	
+	Stock stock=null;
+	if(optionalStock.isPresent()) {
+		 stock=optionalStock.get();
+		 return	modelMapper.map(stock, StockDto.class);
+	}else {
+		throw new InvalidStockIdException("Stock is not available with stock id"+id);
+	}
+	}
+	
+	/*	StockResponse stockResponse=new StockResponse();
 		stockResponse.setStockId(stock.getStockId());
 		stockResponse.setMarketName(stock.getMarketName());
 		stockResponse.setName(stock.getName());
-		stockResponse.setPrice(stock.getPrice());
+		stockResponse.setPrice(stock.getPrice()); */
 		
-		return stockResponse;
-	/* Optional<Stock> optStock=	stockRepository.findById(stockId);
+	
 		
-	if(optStock.isPresent()) {
-		return optStock.get();
-	}else {
-		return optStock.orElseGet(()->{return new Stock();}); 
-	} */
-		
-	/*	Optional<Stock> stock1=	stocks.stream().filter(stock -> stock.getStockId()==id).findAny();
-		
-		if(stock1.isPresent()){
-			return stock1.get();
-		}else {
-			return stock1.orElseGet(()->{return new Stock();});
-		} */
-	}
+	//	return stockResponse;
+	
+	
+	
 
 	@Override
-	public StockResponse createStock(StockRequest stock, String token) {
+	public StockDto createStock(StockDto stock, String token) {
 	//	return stockRepository.save(stock);
-		Stock newStock=mapToStock(stock);
+	//	Stock newStock=mapToStock(stock);
+	Stock newStock=	modelMapper.map(stock, Stock.class);
 		if(token.equals("DR66458")) {
 			Stock save= stockRepository.save(newStock);
-			return mapToResponse(save);
+			return modelMapper.map(save,StockDto.class );
 			}else {
 				return null ;
 			} 
@@ -93,17 +118,18 @@ public class StockSerivceImpl implements StockService {
 	}
 
 	@Override
-	public StockResponse updateStock(int stockId, StockRequest stock) {
+	public StockDto updateStock(int stockId, StockDto stockDto) throws InvalidStockIdException {
 		
-		StockResponse stockResponse =getStock(stockId);
-		Stock stock2=mapToStock(stockResponse);
+		StockDto stockResponse =getStock(stockId);
+	//	Stock stock2=mapToEntity(stock);
+	Stock stock2=	modelMapper.map(stockDto, Stock.class);
 		if(stock2!=null) {
-			stock2.setPrice(stock.getPrice());
-			stock2.setMarketName(stock.getMarketName());
-			stock2.setName(stock.getName());
+			stock2.setPrice(stockDto.getPrice());
+			stock2.setMarketName(stockDto.getMarketName());
+			stock2.setName(stockDto.getName());
 			stock2.setStockId(stockId);
 		Stock stock3=	stockRepository.save(stock2);
-	return	mapToResponse(stock3);
+	return	modelMapper.map(stock3,StockDto.class);
 		}
 		
 		return null;
@@ -116,29 +142,23 @@ public class StockSerivceImpl implements StockService {
 		return ("All stocks deleted successfullyy");
 	}
 
-	private Stock mapToStock(StockRequest stockRequest) {
+/*	private Stock mapToEntity(StockDto stockDto) {
 		Stock newStock= new Stock();
-		newStock.setMarketName(stockRequest.getMarketName());
-		newStock.setName(stockRequest.getName());
-		newStock.setPrice(stockRequest.getPrice());
+		newStock.setMarketName(stockDto.getMarketName());
+		newStock.setName(stockDto.getName());
+		newStock.setPrice(stockDto.getPrice());
 		return newStock;
-	}
-	private Stock mapToStock(StockResponse stockResponse) {
-		Stock newStock= new Stock();
-		newStock.setMarketName(stockResponse.getMarketName());
-		newStock.setName(stockResponse.getName());
-		newStock.setPrice(stockResponse.getPrice());
-		return newStock;
-	}
-	private StockResponse mapToResponse(Stock stock) {
+	} */
+	
+/*	private StockDto mapToDto(Stock stock) {
 		
-		StockResponse stockResponse=new StockResponse();
+		StockDto stockResponse=new StockDto();
 		stockResponse.setStockId(stock.getStockId());
 		stockResponse.setPrice(stock.getPrice());
 		stockResponse.setMarketName(stock.getMarketName());
 		stockResponse.setName(stock.getName());
 		
 		return stockResponse;
-	}
+	} */
 
 }

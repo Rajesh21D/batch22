@@ -1,18 +1,13 @@
 package com.zensar.stockapplication.controller;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collector;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,21 +15,12 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.zensar.stockapplication.entity.Stock;
-import com.zensar.stockapplication.entity.StockRequest;
-import com.zensar.stockapplication.entity.StockResponse;
+import com.zensar.stockapplication.dto.StockDto;
+import com.zensar.stockapplication.exceptions.InvalidStockIdException;
 import com.zensar.stockapplication.service.StockService;
-
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import springfox.documentation.annotations.ApiIgnore;
 
 @RestController
 //@Controller
@@ -65,9 +51,9 @@ public class StockController {
 	@GetMapping(produces= {MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE})
 	//@ResponseBody
 	//@RequestMapping(method=RequestMethod.GET)
-	@ApiOperation(value= "Getting All Stock Info")
+	//@ApiOperation(value= "Getting All Stock Info")
 	//@ApiIgnore
-	public List<StockResponse> getAllStocks(@RequestParam(value="pageNumber", defaultValue="0", required=false) int pageNumber,@RequestParam(value="pageSize", defaultValue="5", required=false) int pageSize) {
+	public List<StockDto> getAllStocks(@RequestParam(value="pageNumber", defaultValue="0", required=false) int pageNumber,@RequestParam(value="pageSize", defaultValue="5", required=false) int pageSize) {
 		System.out.println(pageSize);
            return stockService.getAllStock( pageNumber,pageSize);
 }
@@ -86,9 +72,10 @@ public class StockController {
 	
 	@GetMapping(value="/{stockId}",produces= {MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE})
 	//@RequestMapping(value="/{stockId}",method=RequestMethod.GET,produces= {MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE}, consumes= { MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE})
-	@ApiOperation("Getting stock based on stock id")
-	@ApiResponse( message = "Got the stock of given stock id",code = 200)
-	public StockResponse getStock(@ApiParam("stock id has to be greater than 1") @PathVariable("stockId") long id) {
+	//@ApiOperation("Getting stock based on stock id")
+	//@ApiResponse( message = "Got the stock of given stock id",code = 200)
+	//@ApiParam("stock id has to be greater than 1") 
+	public StockDto getStock(@PathVariable("stockId") long id) throws InvalidStockIdException {
 		
 	return stockService.getStock(id);
 	} 
@@ -104,12 +91,27 @@ public class StockController {
 		return null;
 	} */
 	
+	
+	@GetMapping(value="/name/{stockName}",produces= {MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE})
+	public List<StockDto> getStockByName(@PathVariable("stockName") String stockName){
+		return stockService.getStockByItsName(stockName);
+		
+	}
+	
+	@GetMapping(value="/name/{stockName}/price/{stockPrice}",produces= {MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE})
+	public List<StockDto> getStockByName(@PathVariable("stockName") String stockName,@PathVariable("stockPrice") double stockPrice){
+		return stockService.getStockByItsNameAndPrice(stockName,stockPrice);
+		
+	}
+	
+	
+	
 	@PostMapping(produces= {MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE}, consumes= { MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE})
 	//@RequestMapping(method=RequestMethod.POST)
-	public ResponseEntity<StockResponse> createStock(@RequestBody StockRequest stock, @RequestHeader("auth-token")String token) {
-		StockResponse createStock =stockService.createStock(stock, token);
+	public ResponseEntity<StockDto> createStock(@RequestBody StockDto stock, @RequestHeader("auth-token")String token) {
+		StockDto createStock =stockService.createStock(stock, token);
 		
-		return new  ResponseEntity<StockResponse>(createStock,HttpStatus.CREATED);
+		return new  ResponseEntity<StockDto>(createStock,HttpStatus.CREATED);
 	}
 	
 	@DeleteMapping(value="/{stockId}",produces= {MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE}, consumes= { MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE})
@@ -120,7 +122,7 @@ public class StockController {
 	
 	@PutMapping(value="/{stockId}",produces= {MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE}, consumes= { MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE})
 //	@RequestMapping(value="/stocks/{stockId}",method=RequestMethod.GET)
-	public StockResponse updateStock(@PathVariable int stockId,@RequestBody StockRequest stock) {
+	public StockDto updateStock(@PathVariable int stockId,@RequestBody StockDto stock) throws InvalidStockIdException {
 		return stockService.updateStock(stockId, stock);
 	} 
 	
@@ -133,5 +135,11 @@ public class StockController {
 	//return stockService.deleteAllStocks()
 
 	}
+	
+/*	@ExceptionHandler(InvalidStockIdException.class)
+	public String handleException() {
+		return "Invalid Stock Id";
+		
+	} */
 	
 }
